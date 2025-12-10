@@ -24,3 +24,16 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+@keyframes rise {
+  0% { transform: translateY(0) scale(1); opacity: .0; }
+  6% { opacity: .9; }
+  100% { transform: translateY(-120vh) scale(1.1); opacity: 0; }
+}
+
+@keyframes float-slow {
+  0% { transform: translateY(0px) rotate(-1deg); }
+  50% { transform: translateY(-8px) rotate(1deg); }
+  100% { transform: translateY(0px) rotate(-1deg); }
+}
+
+.animate-float-slow { animation: float-slow 4.6s ease-in-out infinite; }
