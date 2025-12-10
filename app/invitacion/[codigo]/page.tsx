@@ -1,4 +1,7 @@
+"use client"; // <-- FIX: Directiva de cliente añadida
+
 import { useEffect, useMemo, useState } from "react";
+import { useParams } from "next/navigation"; // <-- Nuevo: Para obtener el código de la URL
 
 type Invitado = {
   id: string;
@@ -7,14 +10,19 @@ type Invitado = {
   asistira: boolean | null;
 };
 
-// Simulación de datos para demo
-const DEMO_INVITADO: Invitado = {
-  id: "1",
-  nombre: "María González",
-  codigo_unico: "ABC123",
-  asistira: null
+// Función para cargar la configuración del evento desde variables de entorno
+const loadEventConfig = () => {
+  // Se asume que has prefijado tus variables con NEXT_PUBLIC_ para que el cliente pueda acceder.
+  return {
+    title: process.env.NEXT_PUBLIC_EVENT_TITLE,
+    date: process.env.NEXT_PUBLIC_EVENT_DATE,
+    time: process.env.NEXT_PUBLIC_EVENT_TIME,
+    place: process.env.NEXT_PUBLIC_EVENT_PLACE,
+    mapQuery: process.env.NEXT_PUBLIC_EVENT_MAP_QUERY,
+  };
 };
 
+// (OceanBackground, Octopus, Crab, Turtle, Starfish, Fish components remain the same)
 function OceanBackground() {
   return (
     <div className="pointer-events-none fixed inset-0 overflow-hidden">
@@ -165,33 +173,123 @@ function Fish() {
     </svg>
   );
 }
+// ----------------------------------------------------------------------
+// Componente principal modificado
+// ----------------------------------------------------------------------
 
 export default function InvitacionPage() {
-  const [invitado, setInvitado] = useState<Invitado>(DEMO_INVITADO);
-  const [confirmState, setConfirmState] = useState<null | { kind: "si" | "no" }>(null);
+  const params = useParams();
+  const codigo = params.codigo as string; // Obtener el código de la URL
+  
+  const [invitado, setInvitado] = useState<Invitado | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [confirmState, setConfirmState] = useState<null | { kind: "si" | "no"; success: boolean }>(null);
   const [isVisible, setIsVisible] = useState(false);
 
-  const event = {
-    title: "Primer cumpleaños de Luan",
-    date: "10 de febrero",
-    time: "16:00 hs",
-    place: "Salón de fiesta Ensigna",
-    mapQuery: "Salón de fiesta Ensigna, Lima, Perú",
-  };
+  // Cargar detalles del evento desde variables de entorno
+  const event = useMemo(() => loadEventConfig(), []);
 
+  // 1. Lógica de carga del Invitado
   useEffect(() => {
-    setIsVisible(true);
-  }, []);
+    if (!codigo) {
+      setError("Código de invitación no encontrado en la URL.");
+      setIsLoading(false);
+      return;
+    }
 
-  const handleConfirm = (respuesta: "si" | "no") => {
-    setConfirmState({ kind: respuesta });
-    setInvitado((prev) => ({ ...prev, asistira: respuesta === "si" }));
+    const fetchInvitado = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const response = await fetch(`/api/invitado?codigo=${codigo}`);
+        const data = await response.json();
+
+        if (response.ok && data.ok) {
+          setInvitado(data.invitado);
+        } else {
+          setError(data.message || "No se pudo cargar la información del invitado.");
+        }
+      } catch (e) {
+        console.error("Error fetching invitado:", e);
+        setError("Error de conexión al cargar los datos.");
+      } finally {
+        setIsLoading(false);
+        setIsVisible(true); // Iniciar animación una vez que se complete la carga
+      }
+    };
+
+    fetchInvitado();
+  }, [codigo]);
+
+  // 2. Lógica de Confirmación
+  const handleConfirm = async (respuesta: "si" | "no") => {
+    if (!invitado) return; 
+
+    const formData = new FormData();
+    formData.append("codigo_unico", invitado.codigo_unico);
+    formData.append("respuesta", respuesta);
+
+    try {
+      const response = await fetch("/api/confirmar", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.ok) {
+        // Actualizar el estado local en caso de éxito
+        setInvitado((prev) => (prev ? { ...prev, asistira: respuesta === "si" } : null));
+        setConfirmState({ kind: respuesta, success: true });
+      } else {
+        setConfirmState({ kind: respuesta, success: false });
+        console.error("Error al confirmar:", data.message);
+      }
+    } catch (e) {
+      setConfirmState({ kind: respuesta, success: false });
+      console.error("Error de red al confirmar:", e);
+    }
   };
 
   const mapSrc = useMemo(() => {
     const q = encodeURIComponent(event.mapQuery);
-    return `https://www.google.com/maps?q=${q}&output=embed`;
+    // URL de Google Maps corregida para el formato embed
+    return `https://maps.google.com/maps?q=${q}&t=&z=15&ie=UTF8&iwloc=&output=embed`; 
   }, [event.mapQuery]);
+
+  // --- RENDERING ESTADOS ---
+
+  if (isLoading) {
+    return (
+      <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-b from-[#8ED6F4] to-[#1F4E79]">
+        <OceanBackground />
+        <div className="relative p-6 text-center text-white">
+          <div className="text-4xl animate-bounce">🌊</div>
+          <p className="mt-4 text-lg font-semibold">Cargando invitación...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !invitado) {
+    return (
+      <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-b from-[#8ED6F4] to-[#1F4E79]">
+        <OceanBackground />
+        <div className="relative max-w-sm rounded-3xl bg-white/95 p-8 text-center shadow-2xl">
+          <div className="mb-4 text-5xl">⚠️</div>
+          <div className="mb-3 text-2xl font-bold text-red-600">
+            Error
+          </div>
+          <div className="text-base leading-relaxed text-[#1F4E79]">
+            {error || "El código de invitación no es válido o no se pudo cargar la información."}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // --- RENDERING INVITACIÓN ---
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-gradient-to-b from-[#8ED6F4] to-[#1F4E79]">
@@ -207,7 +305,7 @@ export default function InvitacionPage() {
           }`}
         >
           <div className="mx-auto w-fit rounded-full bg-white/90 px-6 py-2.5 text-sm font-bold text-[#1F4E79] shadow-lg backdrop-blur-sm border-2 border-white/60">
-            🌊 {event.title} 🌊
+            🌊 {event.title} 🌊 {/* Usa data del .env */}
           </div>
         </div>
 
@@ -247,7 +345,7 @@ export default function InvitacionPage() {
             <div className="mb-6 text-center">
               <div className="mb-1 text-base font-semibold text-[#1F4E79]">¡Hola,</div>
               <div className="mb-2 text-3xl font-bold text-[#1F4E79] tracking-tight">
-                {invitado?.nombre}!
+                {invitado.nombre}! {/* Usa data del invitado */}
               </div>
               <div className="text-sm text-[#57B6E5] font-medium">
                 🐳 Nuestro pequeño explorador del mar cumple 1 año 🐳
@@ -263,7 +361,7 @@ export default function InvitacionPage() {
                 <div>
                   <div className="text-xs font-semibold text-[#1F4E79]/70 uppercase tracking-wide">Fecha y Hora</div>
                   <div className="text-base font-bold text-[#1F4E79]">
-                    {event.date} · {event.time}
+                    {event.date} · {event.time} {/* Usa data del .env */}
                   </div>
                 </div>
               </div>
@@ -274,7 +372,7 @@ export default function InvitacionPage() {
                 </div>
                 <div>
                   <div className="text-xs font-semibold text-[#1F4E79]/70 uppercase tracking-wide">Lugar</div>
-                  <div className="text-base font-bold text-[#1F4E79]">{event.place}</div>
+                  <div className="text-base font-bold text-[#1F4E79]">{event.place}</div> {/* Usa data del .env */}
                 </div>
               </div>
             </div>
@@ -305,24 +403,30 @@ export default function InvitacionPage() {
             <div className="mb-4 grid grid-cols-2 gap-3">
               <button
                 onClick={() => handleConfirm("si")}
-                className="group relative overflow-hidden rounded-xl bg-gradient-to-r from-[#7BDCB5] to-[#46b98d] py-4 font-bold text-white shadow-lg transition-all hover:shadow-xl active:scale-95"
+                className={`group relative overflow-hidden rounded-xl bg-gradient-to-r from-[#7BDCB5] to-[#46b98d] py-4 font-bold text-white shadow-lg transition-all hover:shadow-xl active:scale-95 
+                  ${invitado.asistira === true ? 'ring-4 ring-[#7BDCB5]/50' : ''}
+                `}
+                disabled={invitado.asistira === true}
               >
                 <span className="relative z-10 flex items-center justify-center gap-2">
-                  ✅ Sí asistiré
+                  {invitado.asistira === true ? '✅ Confirmado' : '✅ Sí asistiré'}
                 </span>
               </button>
               <button
                 onClick={() => handleConfirm("no")}
-                className="group relative overflow-hidden rounded-xl bg-gradient-to-r from-[#FF8F7A] to-[#ff6a8c] py-4 font-bold text-white shadow-lg transition-all hover:shadow-xl active:scale-95"
+                className={`group relative overflow-hidden rounded-xl bg-gradient-to-r from-[#FF8F7A] to-[#ff6a8c] py-4 font-bold text-white shadow-lg transition-all hover:shadow-xl active:scale-95
+                  ${invitado.asistira === false ? 'ring-4 ring-[#FF8F7A]/50' : ''}
+                `}
+                disabled={invitado.asistira === false}
               >
                 <span className="relative z-10 flex items-center justify-center gap-2">
-                  ❌ No podré
+                  {invitado.asistira === false ? '❌ No confirmado' : '❌ No podré'}
                 </span>
               </button>
             </div>
 
             {/* Estado de confirmación */}
-            {invitado && invitado.asistira !== null && (
+            {invitado.asistira !== null && (
               <div className="rounded-xl bg-gradient-to-r from-[#8ED6F4]/30 to-[#57B6E5]/30 p-4 text-center border border-[#57B6E5]/40">
                 <div className="mb-1 text-sm font-bold text-[#1F4E79]">
                   Estado guardado:
@@ -371,18 +475,27 @@ export default function InvitacionPage() {
                 {confirmState.kind === "si" ? "🎉" : "💙"}
               </div>
               <div className="mb-3 text-2xl font-bold text-[#1F4E79]">
-                {confirmState.kind === "si" ? "¡Gracias por confirmar!" : "¡Gracias por avisarnos!"}
+                {confirmState.success 
+                  ? (confirmState.kind === "si" ? "¡Gracias por confirmar!" : "¡Gracias por avisarnos!")
+                  : "Hubo un error..."}
               </div>
               <div className="mb-6 text-sm leading-relaxed text-[#57B6E5]">
-                {confirmState.kind === "si" ? (
-                  <>
-                    Nos alegra muchísimo que puedas acompañarnos. <br />
-                    ¡Será un día especial y celebrarlo contigo lo hará aún mejor! 🐠💙
-                  </>
+                {confirmState.success ? (
+                  confirmState.kind === "si" ? (
+                    <>
+                      Nos alegra muchísimo que puedas acompañarnos. <br />
+                      ¡Será un día especial y celebrarlo contigo lo hará aún mejor! 🐠💙
+                    </>
+                  ) : (
+                    <>
+                      Entendemos perfectamente. <br />
+                      Te mandamos un abrazo y esperamos compartir juntos en otra ocasión. 🐚✨
+                    </>
+                  )
                 ) : (
                   <>
-                    Entendemos perfectamente. <br />
-                    Te mandamos un abrazo y esperamos compartir juntos en otra ocasión. 🐚✨
+                    No pudimos guardar tu respuesta en este momento. <br />
+                    Por favor, inténtalo de nuevo.
                   </>
                 )}
               </div>
