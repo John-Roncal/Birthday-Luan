@@ -1,16 +1,46 @@
-import { supabase } from "@/lib/supabaseClient";
+"use client";
 
-export default async function AdminPage() {
-  const { data: total } = await supabase.from("invitados").select("id", { count: "exact", head: true });
-  const { data: si } = await supabase.from("invitados").select("id", { count: "exact", head: true }).eq("asistira", true);
-  const { data: no } = await supabase.from("invitados").select("id", { count: "exact", head: true }).eq("asistira", false);
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+
+export default function AdminLogin() {
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const router = useRouter();
+
+  const handleLogin = () => {
+    if (password === process.env.NEXT_PUBLIC_ADMIN_SECRET) {
+      localStorage.setItem("admin", "true");
+      router.push("/admin/dashboard");
+    } else {
+      setError("Código incorrecto");
+    }
+  };
 
   return (
-    <main style={{ padding: 24 }}>
-      <h1>Dashboard (Luan)</h1>
-      <p>Total invitados: {total?.length ?? 0}</p>
-      <p>Asistirán: {si?.length ?? 0}</p>
-      <p>No asistirán: {no?.length ?? 0}</p>
-    </main>
+    <div className="min-h-screen flex items-center justify-center bg-sky-100">
+      <div className="bg-white p-6 rounded-2xl shadow-lg w-80">
+        <h1 className="text-xl font-bold text-center mb-4">
+          Acceso de Administrador
+        </h1>
+
+        <input
+          type="password"
+          placeholder="Ingresa el código"
+          className="w-full p-2 border rounded-lg mb-3"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+
+        {error && <p className="text-sm text-red-600 text-center">{error}</p>}
+
+        <button
+          onClick={handleLogin}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg mt-4"
+        >
+          Ingresar
+        </button>
+      </div>
+    </div>
   );
 }
