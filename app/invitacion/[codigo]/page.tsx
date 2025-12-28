@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 
 type Invitado = {
@@ -92,6 +92,7 @@ function OceanBackground() {
 
 export default function InvitacionPage() {
   const params = useParams();
+  const router = useRouter();
   const codigo = (params?.codigo as string) || "";
 
   const [invitado, setInvitado] = useState<Invitado | null>(null);
@@ -321,9 +322,15 @@ export default function InvitacionPage() {
               </div>
               <button
                 className="rounded-xl bg-gradient-to-r from-[#57B6E5] to-[#7BDCB5] px-8 py-3 font-bold text-white shadow-lg transition-all hover:shadow-xl active:scale-95"
-                onClick={() => setConfirmState(null)}
+                onClick={() => {
+                  if (confirmState.success) {
+                    router.push("/");
+                  } else {
+                    setConfirmState(null);
+                  }
+                }}
               >
-                Cerrar
+                {confirmState.success ? "Ver fotos de Luan 📸" : "Cerrar"}
               </button>
               <div className="absolute bottom-0 left-0 right-0 h-2 bg-gradient-to-r from-[#FF8F7A] via-[#7BDCB5] to-[#57B6E5] rounded-b-3xl" />
             </div>
