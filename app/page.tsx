@@ -5,16 +5,16 @@ import Image from "next/image";
 
 const mesesData = [
   { mes: "Recién nacido", edad: "0 meses", imagen: "/fotos/mes-0.jpg", descripcion: "¡Bienvenido al mundo, Luan!" },
-  { mes: "Primer mes", edad: "1 mes", imagen: "/fotos/mes-1.jpg", descripcion: "Ya sonríe y nos llena de amor" },
+  { mes: "Primer mes", edad: "1 mes", imagen: "/fotos/mes-1.jpg", descripcion: "Celebrando su primer mes" },
   { mes: "Segundo mes", edad: "2 meses", imagen: "/fotos/mes-2.jpg", descripcion: "Descubriendo el mundo" },
-  { mes: "Tercer mes", edad: "3 meses", imagen: "/fotos/mes-3.jpeg", descripcion: "Cada día más curioso" },
-  { mes: "Cuarto mes", edad: "4 meses", imagen: "/fotos/mes-4.jpeg", descripcion: "Risas y alegría todos los días" },
-  { mes: "Quinto mes", edad: "5 meses", imagen: "/fotos/mes-5.jpg", descripcion: "Aprendiendo cosas nuevas" },
+  { mes: "Tercer mes", edad: "3 meses", imagen: "/fotos/mes-3.jpg", descripcion: "Respetando las ventanas del sueño" },
+  { mes: "Cuarto mes", edad: "4 meses", imagen: "/fotos/mes-4.jpg", descripcion: "Un pingüinito y su juguete favorito" },
+  { mes: "Quinto mes", edad: "5 meses", imagen: "/fotos/mes-5.jpg", descripcion: "Conociendo nuevos lugares" },
   { mes: "Sexto mes", edad: "6 meses", imagen: "/fotos/mes-6.jpg", descripcion: "¡Ya medio año de amor!" },
-  { mes: "Séptimo mes", edad: "7 meses", imagen: "/fotos/mes-7.jpg", descripcion: "Cada vez más activo" },
-  { mes: "Octavo mes", edad: "8 meses", imagen: "/fotos/mes-8.jpg", descripcion: "Explorando sin parar" },
+  { mes: "Séptimo mes", edad: "7 meses", imagen: "/fotos/mes-7.jpg", descripcion: "Pequeño explorador" },
+  { mes: "Octavo mes", edad: "8 meses", imagen: "/fotos/mes-8.jpg", descripcion: "Primer Halloween|Conociendo el mar" },
   { mes: "Noveno mes", edad: "9 meses", imagen: "/fotos/mes-9.jpg", descripcion: "Creciendo tan rápido" },
-  { mes: "Décimo mes", edad: "10 meses", imagen: "/fotos/mes-10.jpg", descripcion: "Aventuras cada día" },
+  { mes: "Décimo mes", edad: "10 meses", imagen: "/fotos/mes-10.jpg", descripcion: "Primera Navidad" },
   { mes: "Undécimo mes", edad: "11 meses", imagen: "/fotos/mes-11.jpg", descripcion: "Casi un añito" },
   { mes: "¡1 Año!", edad: "12 meses", imagen: "/fotos/mes-12.jpg", descripcion: "¡Feliz primer cumpleaños!" },
 ];
