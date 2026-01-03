@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 
@@ -100,8 +100,66 @@ export default function InvitacionPage() {
   const [error, setError] = useState<string | null>(null);
   const [confirmState, setConfirmState] = useState<ConfirmState>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const [isMusicPlaying, setIsMusicPlaying] = useState(false);
+  const [showMusicPrompt, setShowMusicPrompt] = useState(false);
+  
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const event = useMemo(() => loadEventConfig(), []);
+
+  // Inicializar y reproducir audio automáticamente
+  useEffect(() => {
+    audioRef.current = new Audio("/music/ocean-theme.mp3");
+    audioRef.current.loop = true;
+    audioRef.current.volume = 0.3;
+
+    // Intentar reproducir automáticamente
+    const playAudio = async () => {
+      try {
+        await audioRef.current?.play();
+        setIsMusicPlaying(true);
+      } catch (error) {
+        // Si el navegador bloquea la reproducción automática, mostrar prompt
+        console.log("Reproducción automática bloqueada, mostrando prompt");
+        setShowMusicPrompt(true);
+      }
+    };
+
+    // Esperar un momento antes de reproducir
+    const timer = setTimeout(playAudio, 500);
+
+    return () => {
+      clearTimeout(timer);
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
+
+  // Función para iniciar la música manualmente
+  const startMusic = () => {
+    if (audioRef.current) {
+      audioRef.current.play().catch((error) => {
+        console.log("Error al reproducir audio:", error);
+      });
+      setIsMusicPlaying(true);
+      setShowMusicPrompt(false);
+    }
+  };
+
+  // Toggle música
+  const toggleMusic = () => {
+    if (audioRef.current) {
+      if (isMusicPlaying) {
+        audioRef.current.pause();
+        setIsMusicPlaying(false);
+      } else {
+        audioRef.current.play();
+        setIsMusicPlaying(true);
+      }
+    }
+  };
 
   useEffect(() => {
     if (!codigo) {
@@ -175,8 +233,9 @@ export default function InvitacionPage() {
       <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-b from-[#8ED6F4] to-[#1F4E79]">
         <OceanBackground />
         <div className="relative p-6 text-center text-white z-20">
-          <div className="text-4xl animate-bounce">🌊</div>
-          <p className="mt-4 text-lg font-semibold">Cargando invitación...</p>
+          <div className="text-5xl animate-bounce mb-4">🌊</div>
+          <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-xl font-semibold drop-shadow-lg">Cargando invitación...</p>
         </div>
       </div>
     );
@@ -184,11 +243,11 @@ export default function InvitacionPage() {
 
   if (error || !invitado) {
     return (
-      <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-b from-[#8ED6F4] to-[#1F4E79]">
+      <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-b from-[#8ED6F4] to-[#1F4E79] p-4">
         <OceanBackground />
-        <div className="relative max-w-sm rounded-3xl bg-white/95 p-8 text-center shadow-2xl z-20">
-          <div className="mb-4 text-5xl">⚠️</div>
-          <div className="mb-3 text-2xl font-bold text-red-600">Error</div>
+        <div className="relative max-w-sm w-full rounded-3xl bg-white/95 backdrop-blur-lg p-8 text-center shadow-2xl z-20 border-2 border-white/60">
+          <div className="mb-6 text-6xl animate-pulse">⚠️</div>
+          <div className="mb-4 text-2xl font-bold text-red-600">¡Oops!</div>
           <div className="text-base leading-relaxed text-[#1F4E79]">
             {error || "El código de invitación no es válido o no se pudo cargar la información."}
           </div>
@@ -201,84 +260,147 @@ export default function InvitacionPage() {
     <div className="relative min-h-screen overflow-x-hidden bg-gradient-to-b from-[#8ED6F4] to-[#1F4E79]">
       <OceanBackground />
 
+      {/* Control de música flotante */}
+      <button
+        onClick={toggleMusic}
+        className="fixed top-4 right-4 z-50 w-14 h-14 bg-white/90 backdrop-blur-sm rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95 border-2 border-white"
+        aria-label={isMusicPlaying ? "Pausar música" : "Reproducir música"}
+      >
+        <span className="text-2xl">{isMusicPlaying ? "🔊" : "🔇"}</span>
+      </button>
+
+      {/* Prompt inicial de música */}
+      {showMusicPrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="relative w-full max-w-sm">
+            <div className="relative rounded-3xl bg-white/95 backdrop-blur-lg p-8 text-center shadow-2xl animate-in zoom-in-95 duration-500 border-2 border-white/60">
+              <div className="mb-6 text-6xl animate-bounce">🎵</div>
+              <div className="mb-3 text-2xl font-bold text-[#1F4E79]">
+                Activa el sonido
+              </div>
+              <div className="mb-6 text-sm leading-relaxed text-[#57B6E5]">
+                Toca aquí para escuchar el sonido de la invitación 🎶
+              </div>
+              <div className="flex gap-3">
+                <button
+                  className="flex-1 rounded-xl bg-gradient-to-r from-[#57B6E5] to-[#7BDCB5] px-6 py-4 font-bold text-white shadow-lg transition-all hover:shadow-xl active:scale-95 text-lg"
+                  onClick={startMusic}
+                >
+                  🔊 Activar sonido bajo el mar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="relative z-10 mx-auto flex min-h-screen max-w-lg flex-col px-4 py-6">
         <div className={`mb-6 text-center transition-all duration-1000 ${isVisible ? "translate-y-0 opacity-100" : "-translate-y-10 opacity-0"}`}>
-          <div className="mx-auto w-fit rounded-full bg-white/90 px-8 py-4 text-xl md:text-2xl font-bold text-[#1F4E79] shadow-lg backdrop-blur-sm border-2 border-white/60">
+          <div className="mx-auto w-fit rounded-full bg-white/90 px-6 py-3 text-lg md:text-2xl font-bold text-[#1F4E79] shadow-xl backdrop-blur-sm border-2 border-white/60 animate-pulse-slow">
             🌊 {event.title} 🌊
           </div>
         </div>
 
-        <div className={`relative rounded-3xl bg-white/80 backdrop-blur-lg shadow-2xl overflow-hidden transition-all duration-1000 delay-200 ${isVisible ? "scale-100 opacity-100" : "scale-95 opacity-0"}`}>
+        <div className={`relative rounded-3xl bg-white/90 backdrop-blur-lg shadow-2xl overflow-hidden transition-all duration-1000 delay-200 border-2 border-white/60 ${isVisible ? "scale-100 opacity-100" : "scale-95 opacity-0"}`}>
           <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-[#57B6E5] via-[#7BDCB5] to-[#FF8F7A]" />
 
           <div className="p-6">
+            {/* Foto de Luan con efecto mejorado */}
             <div className="mb-6 flex justify-center">
               <div className="relative">
-                <div className="absolute -inset-3 rounded-full bg-gradient-to-r from-[#57B6E5] via-[#7BDCB5] to-[#FF8F7A] opacity-75 blur-xl animate-pulse" />
-                <div className="relative h-36 w-36 overflow-hidden rounded-full border-4 border-white shadow-2xl bg-gradient-to-br from-[#8ED6F4] to-[#57B6E5]">
-                  <Image src="/luan.jpeg" alt="Luan" fill className="object-cover" priority sizes="144px" />
+                <div className="absolute -inset-4 rounded-full bg-gradient-to-r from-[#57B6E5] via-[#7BDCB5] to-[#FF8F7A] opacity-75 blur-2xl animate-pulse" />
+                <div className="relative h-40 w-40 overflow-hidden rounded-full border-4 border-white shadow-2xl bg-gradient-to-br from-[#8ED6F4] to-[#57B6E5] ring-4 ring-white/50">
+                  <Image src="/luan.jpeg" alt="Luan" fill className="object-cover" priority sizes="160px" />
                 </div>
               </div>
             </div>
 
-            <div className="mb-6 text-center">
-              <div className="mb-1 text-base font-semibold text-[#1F4E79]">¡Hola,</div>
-              <div className="mb-2 text-3xl font-bold text-[#1F4E79] tracking-tight">{invitado.nombre}!</div>
-              <div className="text-sm text-[#57B6E5] font-medium">🐳 Nuestro pequeño explorador del mar cumple 1 año 🐳</div>
+            {/* Saludo personalizado mejorado */}
+            <div className="mb-6 text-center space-y-2">
+              <div className="text-base font-semibold text-[#1F4E79]">¡Hola,</div>
+              <div className="text-4xl font-bold text-[#1F4E79] tracking-tight animate-wave-text">
+                {invitado.nombre}!
+              </div>
+              <div className="inline-block bg-gradient-to-r from-[#57B6E5] to-[#7BDCB5] text-white px-4 py-2 rounded-full text-sm font-medium shadow-md">
+                🐳 Nuestro pequeño explorador del mar cumple 1 año 🐳
+              </div>
             </div>
 
-            <div className="mb-5 space-y-3 rounded-2xl bg-gradient-to-br from-[#8ED6F4]/20 to-[#57B6E5]/20 p-5 border border-[#57B6E5]/30">
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-[#F9D97F] to-[#f7c35b] text-2xl shadow-lg">📅</div>
-                <div>
+            {/* Información del evento con iconos mejorados */}
+            <div className="mb-5 space-y-3 rounded-2xl bg-gradient-to-br from-[#8ED6F4]/20 to-[#57B6E5]/20 p-5 border-2 border-[#57B6E5]/30 shadow-inner">
+              <div className="flex items-center gap-4 p-3 bg-white/50 rounded-xl hover:bg-white/70 transition-colors">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-[#F9D97F] to-[#f7c35b] text-2xl shadow-lg flex-shrink-0">
+                  📅
+                </div>
+                <div className="flex-1 min-w-0">
                   <div className="text-xs font-semibold text-[#1F4E79]/70 uppercase tracking-wide">Fecha y Hora</div>
-                  <div className="text-base font-bold text-[#1F4E79]">{event.date} · {event.time}</div>
+                  <div className="text-base font-bold text-[#1F4E79] truncate">{event.date}</div>
+                  <div className="text-sm font-semibold text-[#57B6E5]">{event.time}</div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-[#FF8F7A] to-[#ff6a8c] text-2xl shadow-lg">📍</div>
-                <div>
+              <div className="flex items-center gap-4 p-3 bg-white/50 rounded-xl hover:bg-white/70 transition-colors">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-[#FF8F7A] to-[#ff6a8c] text-2xl shadow-lg flex-shrink-0">
+                  📍
+                </div>
+                <div className="flex-1 min-w-0">
                   <div className="text-xs font-semibold text-[#1F4E79]/70 uppercase tracking-wide">Lugar</div>
                   <div className="text-base font-bold text-[#1F4E79]">{event.place}</div>
                 </div>
               </div>
             </div>
 
+            {/* Mapa mejorado */}
             <div className="mb-5 overflow-hidden rounded-2xl border-2 border-[#57B6E5]/40 shadow-xl">
-              <div className="bg-gradient-to-r from-[#57B6E5] to-[#7BDCB5] px-4 py-2.5 text-center">
-                <div className="text-sm font-bold text-white">🗺️ ¿Cómo llegar?</div>
+              <div className="bg-gradient-to-r from-[#57B6E5] to-[#7BDCB5] px-4 py-3 text-center">
+                <div className="text-sm font-bold text-white flex items-center justify-center gap-2">
+                  <span className="text-lg">🗺️</span>
+                  <span>¿Cómo llegar?</span>
+                </div>
               </div>
               <div className="aspect-[16/9] w-full">
                 <iframe className="h-full w-full border-0" src={mapSrc} loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
               </div>
             </div>
 
-            <div className="mb-4 text-center">
-              <div className="mb-3 text-base font-bold text-[#1F4E79]">¿Nos acompañas a esta aventura bajo el mar? 🌊</div>
+            {/* Pregunta de confirmación mejorada */}
+            <div className="mb-4 text-center p-4 bg-gradient-to-r from-[#8ED6F4]/20 to-[#57B6E5]/20 rounded-2xl">
+              <div className="text-lg font-bold text-[#1F4E79] mb-1">
+                ¿Nos acompañas a esta aventura bajo el mar?
+              </div>
+              <div className="text-3xl">🌊🎉🐠</div>
             </div>
 
+            {/* Botones de confirmación mejorados */}
             <div className="mb-4 grid grid-cols-2 gap-3">
               <button
                 onClick={() => handleConfirm("si")}
-                className="group relative overflow-hidden rounded-xl bg-gradient-to-r from-[#7BDCB5] to-[#46b98d] py-4 font-bold text-white shadow-lg transition-all hover:shadow-xl active:scale-95 disabled:opacity-60"
+                className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-[#7BDCB5] to-[#46b98d] py-5 font-bold text-white shadow-xl transition-all hover:shadow-2xl hover:scale-105 active:scale-95 disabled:opacity-60 disabled:hover:scale-100"
                 disabled={invitado.asistira === true}
               >
-                ✅ {invitado.asistira === true ? "Confirmado" : "Sí asistiré"}
+                <div className="relative z-10 flex flex-col items-center gap-1">
+                  <span className="text-3xl">✅</span>
+                  <span className="text-sm">{invitado.asistira === true ? "Confirmado" : "Sí asistiré"}</span>
+                </div>
               </button>
               <button
                 onClick={() => handleConfirm("no")}
-                className="group relative overflow-hidden rounded-xl bg-gradient-to-r from-[#FF8F7A] to-[#ff6a8c] py-4 font-bold text-white shadow-lg transition-all hover:shadow-xl active:scale-95 disabled:opacity-60"
+                className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-[#FF8F7A] to-[#ff6a8c] py-5 font-bold text-white shadow-xl transition-all hover:shadow-2xl hover:scale-105 active:scale-95 disabled:opacity-60 disabled:hover:scale-100"
                 disabled={invitado.asistira === false}
               >
-                ❌ {invitado.asistira === false ? "No confirmado" : "No podré"}
+                <div className="relative z-10 flex flex-col items-center gap-1">
+                  <span className="text-3xl">❌</span>
+                  <span className="text-sm">{invitado.asistira === false ? "No confirmado" : "No podré"}</span>
+                </div>
               </button>
             </div>
 
+            {/* Estado guardado mejorado */}
             {invitado.asistira !== null && (
-              <div className="rounded-xl bg-gradient-to-r from-[#8ED6F4]/30 to-[#57B6E5]/30 p-4 text-center border border-[#57B6E5]/40">
+              <div className="rounded-2xl bg-gradient-to-r from-[#8ED6F4]/30 to-[#57B6E5]/30 p-5 text-center border-2 border-[#57B6E5]/40 shadow-lg animate-in fade-in duration-500">
+                <div className="text-4xl mb-2">{invitado.asistira ? "🎊" : "💙"}</div>
                 <div className="mb-1 text-sm font-bold text-[#1F4E79]">Estado guardado:</div>
-                <div className="text-base font-semibold text-[#1F4E79]">
+                <div className="text-lg font-bold text-[#1F4E79]">
                   {invitado.asistira ? "¡Confirmado! Nos vemos allá 🎉" : "Te extrañaremos 💙"}
                 </div>
               </div>
@@ -288,28 +410,36 @@ export default function InvitacionPage() {
           <div className="h-2 bg-gradient-to-r from-[#FF8F7A] via-[#7BDCB5] to-[#57B6E5]" />
         </div>
 
-        <div className={`mt-6 text-center transition-all duration-1000 delay-500 ${isVisible ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"}`}>
-          <div className="rounded-full bg-white/80 backdrop-blur-sm px-6 py-3 inline-block shadow-lg">
-            <div className="text-sm font-semibold text-[#1F4E79]">Gracias por visitar la invitación de Luan 💙</div>
-            <div className="text-xs text-[#57B6E5] mt-1">¡Te esperamos bajo el mar! 🐠</div>
+        {/* Footer mejorado */}
+        <div className={`mt-8 text-center transition-all duration-1000 delay-500 ${isVisible ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"}`}>
+          <div className="inline-block rounded-2xl bg-white/90 backdrop-blur-sm px-6 py-4 shadow-xl border-2 border-white/60">
+            <div className="text-base font-bold text-[#1F4E79] mb-1">
+              Gracias por visitar la invitación de Luan 💙
+            </div>
+            <div className="text-sm text-[#57B6E5] font-medium flex items-center justify-center gap-2">
+              <span>🐠</span>
+              <span>¡Te esperamos bajo el mar!</span>
+              <span>🐚</span>
+            </div>
           </div>
         </div>
       </div>
 
+      {/* Modal de confirmación mejorado */}
       {confirmState && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
           <div className="relative w-full max-w-sm">
-            <div className="relative rounded-3xl bg-white p-8 text-center shadow-2xl animate-in zoom-in-95 duration-500">
+            <div className="relative rounded-3xl bg-white/95 backdrop-blur-lg p-8 text-center shadow-2xl animate-in zoom-in-95 duration-500 border-2 border-white/60">
               <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-[#57B6E5] via-[#7BDCB5] to-[#FF8F7A] rounded-t-3xl" />
-              <div className="mb-4 text-5xl">{confirmState.kind === "si" ? "🎉" : "💙"}</div>
-              <div className="mb-3 text-2xl font-bold text-[#1F4E79]">
+              <div className="mb-6 text-7xl animate-bounce">{confirmState.kind === "si" ? "🎉" : "💙"}</div>
+              <div className="mb-4 text-3xl font-bold text-[#1F4E79]">
                 {confirmState.success
                   ? confirmState.kind === "si"
                     ? "¡Gracias por confirmar!"
                     : "¡Gracias por avisarnos!"
                   : "Hubo un error..."}
               </div>
-              <div className="mb-6 text-sm leading-relaxed text-[#57B6E5]">
+              <div className="mb-6 text-base leading-relaxed text-[#57B6E5]">
                 {confirmState.success ? (
                   confirmState.kind === "si" ? (
                     <>Nos alegra muchísimo que puedas acompañarnos.<br />¡Será un día especial y celebrarlo contigo lo hará aún mejor! 🐠💙</>
@@ -321,7 +451,7 @@ export default function InvitacionPage() {
                 )}
               </div>
               <button
-                className="rounded-xl bg-gradient-to-r from-[#57B6E5] to-[#7BDCB5] px-8 py-3 font-bold text-white shadow-lg transition-all hover:shadow-xl active:scale-95"
+                className="w-full rounded-xl bg-gradient-to-r from-[#57B6E5] to-[#7BDCB5] px-8 py-4 font-bold text-white shadow-lg transition-all hover:shadow-xl hover:scale-105 active:scale-95"
                 onClick={() => {
                   if (confirmState.success) {
                     router.push("/");
@@ -330,7 +460,16 @@ export default function InvitacionPage() {
                   }
                 }}
               >
-                {confirmState.success ? "Ver fotos de Luan 📸" : "Cerrar"}
+                <span className="flex items-center justify-center gap-2 text-lg">
+                  {confirmState.success ? (
+                    <>
+                      <span>Ver fotos de Luan</span>
+                      <span className="text-2xl">📸</span>
+                    </>
+                  ) : (
+                    "Cerrar"
+                  )}
+                </span>
               </button>
               <div className="absolute bottom-0 left-0 right-0 h-2 bg-gradient-to-r from-[#FF8F7A] via-[#7BDCB5] to-[#57B6E5] rounded-b-3xl" />
             </div>
@@ -352,8 +491,13 @@ export default function InvitacionPage() {
           from { transform: translateX(110vw) scaleX(-1) rotate(5deg); }
           to { transform: translateX(-220px) scaleX(-1) rotate(-5deg); }
         }
+        @keyframes pulse-slow {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.95; transform: scale(1.02); }
+        }
         .animate-swim-right { animation: swim-right linear infinite; }
         .animate-swim-left { animation: swim-left linear infinite; }
+        .animate-pulse-slow { animation: pulse-slow 3s ease-in-out infinite; }
       `}</style>
     </div>
   );
