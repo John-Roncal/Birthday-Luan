@@ -1,20 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 
 const mesesData = [
   { mes: "Recién nacido", edad: "0 meses", imagen: "/fotos/mes-0.jpg", descripcion: "¡Bienvenido al mundo, Luan!" },
-  { mes: "Primer mes", edad: "1 mes", imagen: "/fotos/mes-1.jpg", descripcion: "Celebrando su primer mes" },
+  { mes: "Primer mes", edad: "1 mes", imagen: "/fotos/mes-1.jpg", descripcion: "Ya sonríe y nos llena de amor" },
   { mes: "Segundo mes", edad: "2 meses", imagen: "/fotos/mes-2.jpg", descripcion: "Descubriendo el mundo" },
-  { mes: "Tercer mes", edad: "3 meses", imagen: "/fotos/mes-3.jpg", descripcion: "Respetando las ventanas del sueño" },
-  { mes: "Cuarto mes", edad: "4 meses", imagen: "/fotos/mes-4.jpg", descripcion: "Un pingüinito y su juguete favorito" },
-  { mes: "Quinto mes", edad: "5 meses", imagen: "/fotos/mes-5.jpg", descripcion: "Conociendo nuevos lugares" },
+  { mes: "Tercer mes", edad: "3 meses", imagen: "/fotos/mes-3.jpg", descripcion: "Cada día más curioso" },
+  { mes: "Cuarto mes", edad: "4 meses", imagen: "/fotos/mes-4.jpg", descripcion: "Risas y alegría todos los días" },
+  { mes: "Quinto mes", edad: "5 meses", imagen: "/fotos/mes-5.jpg", descripcion: "Aprendiendo cosas nuevas" },
   { mes: "Sexto mes", edad: "6 meses", imagen: "/fotos/mes-6.jpg", descripcion: "¡Ya medio año de amor!" },
-  { mes: "Séptimo mes", edad: "7 meses", imagen: "/fotos/mes-7.jpg", descripcion: "Pequeño explorador" },
-  { mes: "Octavo mes", edad: "8 meses", imagen: "/fotos/mes-8.jpg", descripcion: "Primer Halloween|Conociendo el mar" },
+  { mes: "Séptimo mes", edad: "7 meses", imagen: "/fotos/mes-7.jpg", descripcion: "Cada vez más activo" },
+  { mes: "Octavo mes", edad: "8 meses", imagen: "/fotos/mes-8.jpg", descripcion: "Explorando sin parar" },
   { mes: "Noveno mes", edad: "9 meses", imagen: "/fotos/mes-9.jpg", descripcion: "Creciendo tan rápido" },
-  { mes: "Décimo mes", edad: "10 meses", imagen: "/fotos/mes-10.jpg", descripcion: "Primera Navidad" },
+  { mes: "Décimo mes", edad: "10 meses", imagen: "/fotos/mes-10.jpg", descripcion: "Aventuras cada día" },
   { mes: "Undécimo mes", edad: "11 meses", imagen: "/fotos/mes-11.jpg", descripcion: "Casi un añito" },
   { mes: "¡1 Año!", edad: "12 meses", imagen: "/fotos/mes-12.jpg", descripcion: "¡Feliz primer cumpleaños!" },
 ];
@@ -23,10 +23,52 @@ export default function CarruselFotos() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [isVisible, setIsVisible] = useState(false);
+  const [isMusicPlaying, setIsMusicPlaying] = useState(false);
+  const [showMusicPrompt, setShowMusicPrompt] = useState(true);
+  
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     setIsVisible(true);
   }, []);
+
+  // Inicializar audio
+  useEffect(() => {
+    audioRef.current = new Audio("/music/tarzan-theme.mp3");
+    audioRef.current.loop = true;
+    audioRef.current.volume = 0.3;
+
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
+
+  // Función para iniciar la música
+  const startMusic = () => {
+    if (audioRef.current) {
+      audioRef.current.play().catch((error) => {
+        console.log("No se pudo reproducir el audio automáticamente:", error);
+      });
+      setIsMusicPlaying(true);
+      setShowMusicPrompt(false);
+    }
+  };
+
+  // Toggle música
+  const toggleMusic = () => {
+    if (audioRef.current) {
+      if (isMusicPlaying) {
+        audioRef.current.pause();
+        setIsMusicPlaying(false);
+      } else {
+        audioRef.current.play();
+        setIsMusicPlaying(true);
+      }
+    }
+  };
 
   // Auto-play del carrusel
   useEffect(() => {
@@ -188,6 +230,46 @@ export default function CarruselFotos() {
           </div>
         </div>
       </div>
+
+      {/* Control de música flotante */}
+      <button
+        onClick={toggleMusic}
+        className="fixed top-4 right-4 z-50 w-14 h-14 bg-white/90 backdrop-blur-sm rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95 border-2 border-white"
+        aria-label={isMusicPlaying ? "Pausar música" : "Reproducir música"}
+      >
+        <span className="text-2xl">{isMusicPlaying ? "🔊" : "🔇"}</span>
+      </button>
+
+      {/* Prompt inicial de música */}
+      {showMusicPrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="relative w-full max-w-sm">
+            <div className="relative rounded-3xl bg-white/95 backdrop-blur-lg p-8 text-center shadow-2xl animate-in zoom-in-95 duration-500 border-2 border-white/60">
+              <div className="mb-6 text-6xl animate-bounce">🎵</div>
+              <div className="mb-3 text-2xl font-bold text-[#1F4E79]">
+                ¡Bienvenido!
+              </div>
+              <div className="mb-6 text-sm leading-relaxed text-[#57B6E5]">
+                ¿Quieres escuchar música mientras navegas por las fotos?
+              </div>
+              <div className="flex gap-3">
+                <button
+                  className="flex-1 rounded-xl bg-gradient-to-r from-[#57B6E5] to-[#7BDCB5] px-6 py-3 font-bold text-white shadow-lg transition-all hover:shadow-xl active:scale-95"
+                  onClick={startMusic}
+                >
+                  🎶 Sí, por favor
+                </button>
+                <button
+                  className="flex-1 rounded-xl bg-gray-200 hover:bg-gray-300 px-6 py-3 font-bold text-gray-700 shadow-lg transition-all active:scale-95"
+                  onClick={() => setShowMusicPrompt(false)}
+                >
+                  No, gracias
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style jsx global>{`
         @keyframes rise {
