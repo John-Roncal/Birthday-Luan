@@ -5,16 +5,16 @@ import Image from "next/image";
 
 const mesesData = [
   { mes: "Recién nacido", edad: "0 meses", imagen: "/fotos/mes-0.jpg", descripcion: "¡Bienvenido al mundo, Luan!" },
-  { mes: "Primer mes", edad: "1 mes", imagen: "/fotos/mes-1.jpg", descripcion: "Ya sonríe y nos llena de amor" },
+  { mes: "Primer mes", edad: "1 mes", imagen: "/fotos/mes-1.jpg", descripcion: "Celebrando su primer mes juntos" },
   { mes: "Segundo mes", edad: "2 meses", imagen: "/fotos/mes-2.jpg", descripcion: "Descubriendo el mundo" },
-  { mes: "Tercer mes", edad: "3 meses", imagen: "/fotos/mes-3.jpg", descripcion: "Cada día más curioso" },
-  { mes: "Cuarto mes", edad: "4 meses", imagen: "/fotos/mes-4.jpg", descripcion: "Risas y alegría todos los días" },
-  { mes: "Quinto mes", edad: "5 meses", imagen: "/fotos/mes-5.jpg", descripcion: "Aprendiendo cosas nuevas" },
+  { mes: "Tercer mes", edad: "3 meses", imagen: "/fotos/mes-3.jpg", descripcion: "Respetando las ventanas del sueño" },
+  { mes: "Cuarto mes", edad: "4 meses", imagen: "/fotos/mes-4.jpg", descripcion: "Festejando con un pingüinito" },
+  { mes: "Quinto mes", edad: "5 meses", imagen: "/fotos/mes-5.jpg", descripcion: "Conociendo nuevos lugares" },
   { mes: "Sexto mes", edad: "6 meses", imagen: "/fotos/mes-6.jpg", descripcion: "¡Ya medio año de amor!" },
-  { mes: "Séptimo mes", edad: "7 meses", imagen: "/fotos/mes-7.jpg", descripcion: "Cada vez más activo" },
-  { mes: "Octavo mes", edad: "8 meses", imagen: "/fotos/mes-8.jpg", descripcion: "Explorando sin parar" },
+  { mes: "Séptimo mes", edad: "7 meses", imagen: "/fotos/mes-7.jpg", descripcion: "Nuestro pequeño explorador" },
+  { mes: "Octavo mes", edad: "8 meses", imagen: "/fotos/mes-8.jpg", descripcion: "Primer Halloween|Conociendo el mar" },
   { mes: "Noveno mes", edad: "9 meses", imagen: "/fotos/mes-9.jpg", descripcion: "Creciendo tan rápido" },
-  { mes: "Décimo mes", edad: "10 meses", imagen: "/fotos/mes-10.jpg", descripcion: "Aventuras cada día" },
+  { mes: "Décimo mes", edad: "10 meses", imagen: "/fotos/mes-10.jpg", descripcion: "Primera Navidad 🎄" },
   { mes: "Undécimo mes", edad: "11 meses", imagen: "/fotos/mes-11.jpg", descripcion: "Casi un añito" },
   { mes: "¡1 Año!", edad: "12 meses", imagen: "/fotos/mes-12.jpg", descripcion: "¡Feliz primer cumpleaños!" },
 ];
@@ -97,6 +97,36 @@ export default function CarruselFotos() {
   };
 
   const currentMes = mesesData[currentIndex];
+  
+  // Cuenta regresiva para el cumpleaños
+  const [countdown, setCountdown] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0
+  });
+
+  useEffect(() => {
+    const calculateCountdown = () => {
+      const birthday = new Date('2026-02-10T00:00:00').getTime();
+      const now = new Date().getTime();
+      const difference = birthday - now;
+
+      if (difference > 0) {
+        setCountdown({
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+          minutes: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)),
+          seconds: Math.floor((difference % (1000 * 60)) / 1000)
+        });
+      }
+    };
+
+    calculateCountdown();
+    const interval = setInterval(calculateCountdown, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#8ED6F4] via-[#57B6E5] to-[#1F4E79] relative overflow-hidden">
@@ -144,14 +174,62 @@ export default function CarruselFotos() {
           <div className="bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl overflow-hidden border-2 border-white/60">
             {/* Imagen principal */}
             <div className="relative aspect-[4/3] bg-gradient-to-br from-sky-100 to-blue-100">
-              <Image
-                src={currentMes.imagen}
-                alt={`Luan - ${currentMes.mes}`}
-                fill
-                className="object-cover"
-                priority
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1000px"
-              />
+              {currentIndex === 12 ? (
+                // Cuenta regresiva para el cumpleaños
+                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#03bb85] via-[#68ddbd] to-[#a4fff7] p-8">
+                  <div className="text-center">
+                    <h3 className="text-3xl md:text-5xl font-bold text-white mb-8 drop-shadow-lg">
+                      ¡Pronto será mi primer cumpleaños! 🎂
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                      <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-4 md:p-6 shadow-xl">
+                        <div className="text-4xl md:text-6xl font-bold text-[#1F4E79] mb-2">
+                          {countdown.days}
+                        </div>
+                        <div className="text-sm md:text-base text-sky-700 font-semibold">
+                          Días
+                        </div>
+                      </div>
+                      <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-4 md:p-6 shadow-xl">
+                        <div className="text-4xl md:text-6xl font-bold text-[#1F4E79] mb-2">
+                          {countdown.hours}
+                        </div>
+                        <div className="text-sm md:text-base text-sky-700 font-semibold">
+                          Horas
+                        </div>
+                      </div>
+                      <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-4 md:p-6 shadow-xl">
+                        <div className="text-4xl md:text-6xl font-bold text-[#1F4E79] mb-2">
+                          {countdown.minutes}
+                        </div>
+                        <div className="text-sm md:text-base text-sky-700 font-semibold">
+                          Minutos
+                        </div>
+                      </div>
+                      <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-4 md:p-6 shadow-xl">
+                        <div className="text-4xl md:text-6xl font-bold text-[#1F4E79] mb-2">
+                          {countdown.seconds}
+                        </div>
+                        <div className="text-sm md:text-base text-sky-700 font-semibold">
+                          Segundos
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-8 text-xl md:text-2xl font-bold text-white drop-shadow-lg">
+                      📅 10 de febrero, 2026
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <Image
+                  src={currentMes.imagen}
+                  alt={`Luan - ${currentMes.mes}`}
+                  fill
+                  className="object-cover"
+                  priority
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1000px"
+                />
+              )}
               
               {/* Controles de navegación */}
               <button

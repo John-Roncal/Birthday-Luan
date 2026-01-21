@@ -310,7 +310,7 @@ export default function InvitacionPage() {
               <div className="relative">
                 <div className="absolute -inset-4 rounded-full bg-gradient-to-r from-[#57B6E5] via-[#7BDCB5] to-[#FF8F7A] opacity-75 blur-2xl animate-pulse" />
                 <div className="relative h-40 w-40 overflow-hidden rounded-full border-4 border-white shadow-2xl bg-gradient-to-br from-[#8ED6F4] to-[#57B6E5] ring-4 ring-white/50">
-                  <Image src="/luan.jpeg" alt="Luan" fill className="object-cover" priority sizes="160px" />
+                  <Image src="/luan.png" alt="Luan" fill className="object-cover" priority sizes="160px" />
                 </div>
               </div>
             </div>
